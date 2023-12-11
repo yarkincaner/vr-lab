@@ -7,6 +7,10 @@ using TMPro;
 public class RoomManager : MonoBehaviourPunCallbacks
 {
     public TextMeshProUGUI occupancyRateText_ForSchool;
+    public TextMeshProUGUI roomName;
+    [SerializeField]
+    GameObject genericVRPlayerPrefab;
+    public Vector3 spawnPosition;
     // Start is called before the first frame update
     void Start()
     {
@@ -18,7 +22,8 @@ public class RoomManager : MonoBehaviourPunCallbacks
     }
     public void JoinRandomRoom()
     {
-        PhotonNetwork.JoinRandomRoom();
+        //PhotonNetwork.JoinRandomRoom();
+        PhotonNetwork.JoinOrCreateRoom("AkdenizCSRoom", new RoomOptions { MaxPlayers = 8, IsOpen = true, IsVisible = true }, TypedLobby.Default);
     }
     public override void OnJoinRandomFailed(short returnCode, string message)
     {
@@ -33,20 +38,22 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         Debug.Log("The local player: " + PhotonNetwork.NickName + " joined to " + PhotonNetwork.CurrentRoom.Name +
             " Player count: " + PhotonNetwork.CurrentRoom.PlayerCount);
+        roomName.text = PhotonNetwork.CurrentRoom.Name;
+        PhotonNetwork.Instantiate(genericVRPlayerPrefab.name, spawnPosition, Quaternion.identity);
 
-        if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("map"))
-        {
-            object mapType;
-            if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("map", out mapType))
-            {
-                Debug.Log("Joined room with the map: " + (string)mapType);
-                if ((string)mapType == "school")
-                {
-                    Debug.Log("LoadLevel World_School: ");
-                    PhotonNetwork.LoadLevel("World_School");
-                }
-            }
-        }
+        //if (PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey("map"))
+        //{
+        //    object mapType;
+        //    if (PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue("map", out mapType))
+        //    {
+        //        Debug.Log("Joined room with the map: " + (string)mapType);
+        //        if ((string)mapType == "school")
+        //        {
+        //            Debug.Log("LoadLevel World_School: ");
+        //            PhotonNetwork.LoadLevel("World_School");
+        //        }
+        //    }
+        //}
     }
     public override void OnPlayerEnteredRoom(Player newPlayer)
     {
@@ -67,11 +74,13 @@ public class RoomManager : MonoBehaviourPunCallbacks
             Debug.Log(room.Name);
             object mapType;
             room.CustomProperties.TryGetValue("map", out mapType);
-            if ((string)mapType == "school")
-            {
-                //update the school room occupancy field
-                occupancyRateText_ForSchool.text = room.PlayerCount + " / " + 20;
-            }
+            //if ((string)mapType == "school")
+            //{
+            //    //update the school room occupancy field
+            //    occupancyRateText_ForSchool.text = room.PlayerCount + " / " + 20;
+            //}
+
+            occupancyRateText_ForSchool.text = room.PlayerCount + " / " + 20;
         }
     }
 
@@ -81,7 +90,15 @@ public class RoomManager : MonoBehaviourPunCallbacks
     {
         ExitGames.Client.Photon.Hashtable expectedCustomRoomProperties
             = new ExitGames.Client.Photon.Hashtable() { { "map", "school" } };
-        PhotonNetwork.JoinRandomRoom(expectedCustomRoomProperties, 0);
+        //PhotonNetwork.JoinRandomRoom(expectedCustomRoomProperties, 0);
+
+        RoomOptions roomOptions = new RoomOptions();
+        roomOptions.MaxPlayers = 20;
+        string[] roomPropsInLobby = { "map" };
+        roomOptions.CustomRoomPropertiesForLobby = roomPropsInLobby;
+        roomOptions.CustomRoomProperties = expectedCustomRoomProperties;
+        roomOptions.IsVisible = true;
+        PhotonNetwork.JoinOrCreateRoom("AkdenizCSRoom", roomOptions, TypedLobby.Default);
     }
     private void CreateAndJoinRoom()
     {
